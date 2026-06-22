@@ -3,7 +3,7 @@ import './App.css'
 
 const locations = ['Nairobi', 'Mombasa', 'Nakuru', 'Kisumu', 'Eldoret']
 const vehicles = ['Sedan', 'SUV', 'Mini Bus', 'Pickup Truck', 'Luxury']
-const stepLabels = ['Trip details', 'Contact info', 'Review & confirm']
+const stepLabels = ['Trip details', 'Contact & ID', 'Review & confirm']
 
 const today = new Date().toISOString().slice(0, 10)
 
@@ -22,8 +22,28 @@ function App() {
     fullName: '',
     email: '',
     phone: '',
+    dateOfBirth: '',
+    licenseNumber: '',
+    licenseExpiry: today,
+    residentialAddress: '',
+    workAddress: '',
+    kraPin: '',
+    idFront: '',
+    idBack: '',
     notes: '',
   })
+
+  const handleChange = (field) => (event) => {
+    const value = event.target.value
+    setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  const handleFileChange = (field) => (event) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setForm((current) => ({ ...current, [field]: file.name }))
+    }
+  }
 
   const canContinue = useMemo(() => {
     if (activeStep === 0) {
@@ -39,7 +59,19 @@ function App() {
     }
 
     if (activeStep === 1) {
-      return form.fullName.trim() && form.email.trim() && form.phone.trim()
+      return (
+        form.fullName.trim() &&
+        form.email.trim() &&
+        form.phone.trim() &&
+        form.dateOfBirth &&
+        form.licenseNumber.trim() &&
+        form.licenseExpiry &&
+        form.residentialAddress.trim() &&
+        form.workAddress.trim() &&
+        form.kraPin.trim() &&
+        form.idFront &&
+        form.idBack
+      )
     }
 
     return true
@@ -48,15 +80,6 @@ function App() {
   const progress = useMemo(() => {
     return ((activeStep / (stepLabels.length - 1)) * 100).toFixed(0)
   }, [activeStep])
-
-  const handleChange = (field) => (event) => {
-    const value = event.target.value
-    setForm((current) => ({ ...current, [field]: value }))
-  }
-
-  const handleRadio = (value) => {
-    setForm((current) => ({ ...current, driverRequired: value }))
-  }
 
   const handleNext = () => {
     if (!canContinue || activeStep >= stepLabels.length - 1) return
@@ -86,6 +109,14 @@ function App() {
       fullName: '',
       email: '',
       phone: '',
+      dateOfBirth: '',
+      licenseNumber: '',
+      licenseExpiry: today,
+      residentialAddress: '',
+      workAddress: '',
+      kraPin: '',
+      idFront: '',
+      idBack: '',
       notes: '',
     })
     setActiveStep(0)
@@ -146,7 +177,7 @@ function App() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-3xl border border-slate-800/90 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/20">
                     <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Available now</p>
-                    <p className="mt-3 text-2xl font-semibold text-white">Sedans, SUVs, minibus</p>
+                    <p className="mt-3 text-2xl font-semibold text-white">Sedans, SUVs, minibuses</p>
                     <p className="mt-2 text-sm text-slate-400">Flexible dropoff and airport transfers available.</p>
                   </div>
                   <div className="rounded-3xl border border-slate-800/90 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/20">
@@ -257,9 +288,12 @@ function App() {
                         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">Driver required?</p>
                         <div className="grid gap-3 sm:grid-cols-2">
                           {['No', 'Yes'].map((option) => (
-                            <button type="button" key={option} onClick={() => handleRadio(option)} className={
-                              `rounded-3xl border px-4 py-3 text-left transition ${form.driverRequired === option ? 'border-cyan-400 bg-cyan-500/10 text-white' : 'border-slate-700/90 bg-slate-900/90 text-slate-300 hover:border-slate-500'}`
-                            }>
+                            <button
+                              type="button"
+                              key={option}
+                              onClick={() => setForm((current) => ({ ...current, driverRequired: option }))}
+                              className={`rounded-3xl border px-4 py-3 text-left transition ${form.driverRequired === option ? 'border-cyan-400 bg-cyan-500/10 text-white' : 'border-slate-700/90 bg-slate-900/90 text-slate-300 hover:border-slate-500'}`}
+                            >
                               <span className="block text-sm font-semibold">{option}</span>
                               <span className="mt-1 block text-xs text-slate-400">{option === 'Yes' ? 'Includes chauffeur service' : 'Self-drive only'}</span>
                             </button>
@@ -271,18 +305,67 @@ function App() {
 
                   {activeStep === 1 && (
                     <div className="space-y-5">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="block text-sm text-slate-300">
+                          Full name
+                          <input type="text" value={form.fullName} onChange={handleChange('fullName')} placeholder="John Doe" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
+                        </label>
+                        <label className="block text-sm text-slate-300">
+                          Email address
+                          <input type="email" value={form.email} onChange={handleChange('email')} placeholder="you@example.com" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
+                        </label>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="block text-sm text-slate-300">
+                          Phone number
+                          <input type="tel" value={form.phone} onChange={handleChange('phone')} placeholder="+254 700 000 000" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
+                        </label>
+                        <label className="block text-sm text-slate-300">
+                          Date of birth
+                          <input type="date" value={form.dateOfBirth} max={today} onChange={handleChange('dateOfBirth')} className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
+                        </label>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="block text-sm text-slate-300">
+                          Driving license number
+                          <input type="text" value={form.licenseNumber} onChange={handleChange('licenseNumber')} placeholder="DL1234567" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
+                        </label>
+                        <label className="block text-sm text-slate-300">
+                          License expiry date
+                          <input type="date" value={form.licenseExpiry} min={today} onChange={handleChange('licenseExpiry')} className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
+                        </label>
+                      </div>
+
                       <label className="block text-sm text-slate-300">
-                        Full name
-                        <input type="text" value={form.fullName} onChange={handleChange('fullName')} placeholder="John Doe" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
+                        Residential address / hotel
+                        <input type="text" value={form.residentialAddress} onChange={handleChange('residentialAddress')} placeholder="123 Road Name, Nairobi" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
                       </label>
                       <label className="block text-sm text-slate-300">
-                        Email address
-                        <input type="email" value={form.email} onChange={handleChange('email')} placeholder="you@example.com" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
+                        Work address
+                        <input type="text" value={form.workAddress} onChange={handleChange('workAddress')} placeholder="Company name, office address" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
                       </label>
                       <label className="block text-sm text-slate-300">
-                        Phone number
-                        <input type="tel" value={form.phone} onChange={handleChange('phone')} placeholder="+254 700 000 000" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
+                        KRA PIN
+                        <input type="text" value={form.kraPin} onChange={handleChange('kraPin')} placeholder="A123456789" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
                       </label>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="block text-sm text-slate-300">
+                          ID / Passport (front)
+                          <input type="file" accept="image/*" capture="environment" onChange={handleFileChange('idFront')} className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 p-4 text-white outline-none transition file:cursor-pointer file:rounded-3xl file:border-0 file:bg-cyan-500/10 file:px-4 file:py-2 file:text-sm file:text-cyan-200" />
+                          <p className="mt-2 text-xs text-slate-500">Use camera to capture the front of your ID or passport.</p>
+                          {form.idFront && <p className="mt-2 text-xs text-slate-400">Captured: {form.idFront}</p>}
+                        </label>
+                        <label className="block text-sm text-slate-300">
+                          ID / Passport (back)
+                          <input type="file" accept="image/*" capture="environment" onChange={handleFileChange('idBack')} className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 p-4 text-white outline-none transition file:cursor-pointer file:rounded-3xl file:border-0 file:bg-cyan-500/10 file:px-4 file:py-2 file:text-sm file:text-cyan-200" />
+                          <p className="mt-2 text-xs text-slate-500">Use camera to capture the back of your ID or passport.</p>
+                          {form.idBack && <p className="mt-2 text-xs text-slate-400">Captured: {form.idBack}</p>}
+                        </label>
+                      </div>
+
                       <label className="block text-sm text-slate-300">
                         Additional notes
                         <textarea value={form.notes} onChange={handleChange('notes')} placeholder="Any special requests or pickup instructions" rows="4" className="mt-2 block w-full rounded-3xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-400" />
@@ -300,7 +383,21 @@ function App() {
                           </div>
                         ))}
                       </div>
-                      <p className="text-sm leading-6 text-slate-400">Review your trip details carefully before confirming. We will reach out to finalize availability and vehicle allocation.</p>
+                      <div className="grid gap-3 rounded-3xl bg-slate-950/90 p-4 text-sm text-slate-300">
+                        <div className="flex items-center justify-between border-b border-slate-800/70 pb-3">
+                          <span>Date of birth</span>
+                          <span>{form.dateOfBirth || 'Not set'}</span>
+                        </div>
+                        <div className="flex items-center justify-between border-b border-slate-800/70 py-3">
+                          <span>License</span>
+                          <span>{form.licenseNumber || 'Not set'}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-3">
+                          <span>Residential / hotel</span>
+                          <span className="text-right">{form.residentialAddress || 'Not set'}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm leading-6 text-slate-400">Review your trip details carefully before confirming. We will contact you to finalize availability and vehicle allocation.</p>
                     </div>
                   )}
 
