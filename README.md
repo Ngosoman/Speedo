@@ -1,16 +1,51 @@
-# React + Vite
+# Speedo Booking Platform (Supabase)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a React + Vite app with a client portal and admin panel backed by Supabase.
 
-Currently, two official plugins are available:
+Implemented features:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Client submits booking form for admin approval.
+- Return date is auto-calculated from pickup date + number of days.
+- Client records are saved with sequential client code starting at `001`.
+- Admin can view, edit, approve, and reject bookings.
+- Admin can upload cars (including photo), assign owner, and edit daily prices.
+- Admin can manage owner records.
+- Admin can view client list and statuses.
+- Admin can flag/blacklist by recording damage cost and notes for client + car.
+- On booking approval, two contract records are generated:
+	- admin-client
+	- admin-owner
 
-## React Compiler
+## 1) Configure Supabase
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Create a Supabase project.
+2. Run SQL in [supabase/schema.sql](supabase/schema.sql) in the SQL editor.
+3. Copy [.env.example](.env.example) to `.env.local` and set values:
 
-## Expanding the ESLint configuration
+```bash
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_ANON_KEY
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+4. Restart the dev server after adding env values.
+
+## 2) Run project
+
+```bash
+npm install
+npm run dev
+```
+
+## 3) Supabase notes
+
+- A public storage bucket named `cars` is required for photo uploads.
+- If bucket creation fails in SQL due to permissions, create it manually in Supabase Storage:
+	- Bucket name: `cars`
+	- Public bucket: enabled
+
+## 4) Suggested next steps
+
+- Add Supabase Auth and role-based access (admin/client/owner login).
+- Add Row Level Security (RLS) policies per role.
+- Generate downloadable PDF contracts.
+- Add server-side function for guaranteed client sequence under high concurrency.
