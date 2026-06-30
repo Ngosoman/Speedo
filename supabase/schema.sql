@@ -91,4 +91,4 @@ create index if not exists idx_blacklist_client_id on blacklist_entries(client_i
 -- Storage bucket for car photos (run once; ignore if already exists)
 insert into storage.buckets (id, name, public)
 values ('cars', 'cars', true)
-on conflict (id) do nothing;
+on conflict (name) do update set public = excluded.public;
