@@ -3,7 +3,7 @@ import { addDaysToDate, nowIsoDateTime, toDateTimeText } from '../lib/date'
 
 function ensureSupabase() {
   if (!hasSupabaseConfig || !supabase) {
-    throw new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local')
+    throw new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or VITE_SUPABASE_PUBLISHABLE_KEY) to .env.local')
   }
 }
 
@@ -114,6 +114,10 @@ export async function submitBooking(formValues) {
 
   const client = await upsertClientFromBooking(formValues)
   const returnDate = addDaysToDate(formValues.pickup_date, formValues.number_of_days)
+  const notesPayload = JSON.stringify({
+    clientNotes: formValues.notes || '',
+    checklist: formValues.car_checklist || {},
+  })
 
   const { data, error } = await supabase
     .from('bookings')
@@ -126,7 +130,7 @@ export async function submitBooking(formValues) {
       return_datetime: toDateTimeText(returnDate, formValues.return_time),
       number_of_days: Number(formValues.number_of_days),
       driver_required: formValues.driver_required,
-      notes: formValues.notes,
+      notes: notesPayload,
       status: 'pending',
       submitted_at: nowIsoDateTime(),
     })

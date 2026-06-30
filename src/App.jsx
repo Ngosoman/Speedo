@@ -16,6 +16,85 @@ import {
 
 const locations = ['Nairobi', 'Mombasa', 'Nakuru', 'Kisumu', 'Eldoret']
 
+const inspectionChecklistGroups = [
+  {
+    title: 'Tools and Safety',
+    items: [
+      { key: 's_wheel', label: 'S/Wheel' },
+      { key: 'jack', label: 'Jack' },
+      { key: 'wheel_spinner', label: 'W/ Spinner' },
+      { key: 'lifesaver', label: 'Lifesaver' },
+      { key: 'first_aid_kit', label: 'First Aid Kit' },
+      { key: 'fire_extinguisher', label: 'Fire Extinguisher' },
+      { key: 'alarm', label: 'Alarm' },
+      { key: 'jumper_cables', label: 'Jumper Cables' },
+      { key: 'towel', label: 'Towel' },
+      { key: 'tow_rope', label: 'Tow Rope' },
+    ],
+  },
+  {
+    title: 'Body and Exterior',
+    items: [
+      { key: 'front_windscreen', label: 'Front Windscreen' },
+      { key: 'rear_windscreen', label: 'Rear Windscreen' },
+      { key: 'mudguard_front_right', label: 'Mudguard Front Right' },
+      { key: 'mudguard_front_left', label: 'Mudguard Front Left' },
+      { key: 'mudguard_rear_right', label: 'Mudguard Rear Right' },
+      { key: 'mudguard_rear_left', label: 'Mudguard Rear Left' },
+    ],
+  },
+  {
+    title: 'Engine Bay',
+    items: [
+      { key: 'engine', label: 'Engine' },
+      { key: 'oil_cap', label: 'Oil Cap' },
+      { key: 'water_cap', label: 'Water Cap' },
+      { key: 'radiator', label: 'Radiator' },
+    ],
+  },
+  {
+    title: 'Windows',
+    items: [
+      { key: 'window_front_right', label: 'Front Right' },
+      { key: 'window_front_left', label: 'Front Left' },
+      { key: 'window_rear_right', label: 'Rear Right' },
+      { key: 'window_rear_left', label: 'Rear Left' },
+    ],
+  },
+  {
+    title: 'Wheel Caps',
+    items: [
+      { key: 'wheelcap_front_right', label: 'Front Right' },
+      { key: 'wheelcap_front_left', label: 'Front Left' },
+      { key: 'wheelcap_rear_right', label: 'Rear Right' },
+      { key: 'wheelcap_rear_left', label: 'Rear Left' },
+    ],
+  },
+  {
+    title: 'Interior and Audio',
+    items: [
+      { key: 'floormat_normal', label: 'Floormat Normal' },
+      { key: 'floormat_plastics', label: 'Floormat Plastics' },
+      { key: 'speaker_front', label: 'Speakers Front' },
+      { key: 'speaker_rear', label: 'Speakers Rear' },
+      { key: 'cd_changer', label: 'CD Changer' },
+      { key: 'cd_player', label: 'CD Player' },
+    ],
+  },
+  {
+    title: 'Special and Other',
+    items: [
+      { key: 'spanner_no_10', label: 'Spanner No. 10' },
+      { key: 'special_nut', label: 'Special Nut' },
+      { key: 'others', label: 'Others' },
+    ],
+  },
+]
+
+const inspectionChecklistKeys = inspectionChecklistGroups.flatMap((group) =>
+  group.items.map((item) => item.key),
+)
+
 function initialBookingForm() {
   return {
     pickup_location: 'Nairobi',
@@ -35,6 +114,7 @@ function initialBookingForm() {
     residential_address: '',
     work_address: '',
     kra_pin: '',
+    car_checklist: {},
     notes: '',
   }
 }
@@ -85,6 +165,28 @@ function toTimeInputText(value) {
   if (!value) return '09:00'
   const timePart = value.split('T')[1] || ''
   return timePart.slice(0, 5)
+}
+
+function parseBookingNotes(rawNotes) {
+  if (!rawNotes) {
+    return {
+      clientNotes: '',
+      checklist: {},
+    }
+  }
+
+  try {
+    const parsed = JSON.parse(rawNotes)
+    return {
+      clientNotes: typeof parsed?.clientNotes === 'string' ? parsed.clientNotes : '',
+      checklist: parsed?.checklist && typeof parsed.checklist === 'object' ? parsed.checklist : {},
+    }
+  } catch {
+    return {
+      clientNotes: rawNotes,
+      checklist: {},
+    }
+  }
 }
 
 function BookingEditor({ booking, cars, onSave }) {
@@ -186,6 +288,10 @@ function App() {
     return addDaysToDate(bookingForm.pickup_date, bookingForm.number_of_days)
   }, [bookingForm.pickup_date, bookingForm.number_of_days])
 
+  const checkedInspectionCount = useMemo(() => {
+    return Object.values(bookingForm.car_checklist || {}).filter(Boolean).length
+  }, [bookingForm.car_checklist])
+
   useEffect(() => {
     if (!hasSupabaseConfig) {
       setError('Supabase config missing. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env.local and restart app.')
@@ -220,6 +326,28 @@ function App() {
       const value = event.target.value
       setBookingForm((current) => ({ ...current, [field]: value }))
     }
+  }
+
+  function handleChecklistToggle(itemKey) {
+    setBookingForm((current) => ({
+      ...current,
+      car_checklist: {
+        ...current.car_checklist,
+        [itemKey]: !current.car_checklist?.[itemKey],
+      },
+    }))
+  }
+
+  function setAllChecklistItems(value) {
+    const nextChecklist = {}
+    for (const key of inspectionChecklistKeys) {
+      nextChecklist[key] = value
+    }
+
+    setBookingForm((current) => ({
+      ...current,
+      car_checklist: nextChecklist,
+    }))
   }
 
   async function handleClientSubmit(event) {
@@ -497,6 +625,53 @@ function App() {
                 <input className="mt-2 w-full rounded-2xl bg-slate-800 px-4 py-3" value={bookingForm.kra_pin} onChange={handleBookingChange('kra_pin')} />
               </label>
 
+              <section className="space-y-4 rounded-2xl border border-slate-700 bg-slate-900/60 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold">Car inspection checklist</h3>
+                    <p className="text-sm text-slate-400">Tick every item after physically checking the car with the admin team.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="rounded-full bg-slate-800 px-3 py-1 text-xs text-cyan-200">
+                      {checkedInspectionCount}/{inspectionChecklistKeys.length} checked
+                    </p>
+                    <button type="button" onClick={() => setAllChecklistItems(true)} className="rounded-xl bg-slate-700 px-3 py-1 text-xs font-semibold">
+                      Mark all
+                    </button>
+                    <button type="button" onClick={() => setAllChecklistItems(false)} className="rounded-xl bg-slate-700 px-3 py-1 text-xs font-semibold">
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {inspectionChecklistGroups.map((group) => (
+                    <fieldset key={group.title} className="rounded-2xl border border-slate-700 bg-slate-800/40 p-4">
+                      <legend className="px-1 text-sm font-semibold text-cyan-200">{group.title}</legend>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        {group.items.map((item) => {
+                          const checked = Boolean(bookingForm.car_checklist?.[item.key])
+                          return (
+                            <label
+                              key={item.key}
+                              className={`flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${checked ? 'bg-cyan-500/20 text-cyan-100' : 'bg-slate-900/70 text-slate-300'}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => handleChecklistToggle(item.key)}
+                                className="h-4 w-4 accent-cyan-400"
+                              />
+                              <span>{item.label}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </fieldset>
+                  ))}
+                </div>
+              </section>
+
               <label className="text-sm block">
                 Notes
                 <textarea rows="3" className="mt-2 w-full rounded-2xl bg-slate-800 px-4 py-3" value={bookingForm.notes} onChange={handleBookingChange('notes')} />
@@ -546,6 +721,16 @@ function App() {
                 <h2 className="text-xl font-semibold">Bookings queue</h2>
                 {bookings.length === 0 && <p className="text-slate-400">No bookings submitted yet.</p>}
                 {bookings.map((booking) => (
+                  (() => {
+                    const details = parseBookingNotes(booking.notes)
+                    const checkedItems = inspectionChecklistGroups
+                      .flatMap((group) =>
+                        group.items
+                          .filter((item) => Boolean(details.checklist?.[item.key]))
+                          .map((item) => item.label),
+                      )
+
+                    return (
                   <article key={booking.id} className="space-y-3 rounded-2xl border border-slate-700 bg-slate-900 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -564,6 +749,22 @@ function App() {
 
                     <p className="text-sm text-slate-300">Pickup: {booking.pickup_location} | Dropoff: {booking.dropoff_location}</p>
                     <p className="text-sm text-slate-300">From: {formatDate(booking.pickup_datetime)} | To: {formatDate(booking.return_datetime)} | Days: {booking.number_of_days}</p>
+                    {details.clientNotes ? (
+                      <p className="text-sm text-slate-300">Client notes: {details.clientNotes}</p>
+                    ) : null}
+                    <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-3 text-sm">
+                      <p className="font-semibold text-cyan-200">Inspection checklist</p>
+                      <p className="mt-1 text-slate-300">
+                        {checkedItems.length} item(s) checked.
+                      </p>
+                      {checkedItems.length > 0 ? (
+                        <p className="mt-2 text-xs text-slate-400">
+                          {checkedItems.join(', ')}
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-xs text-slate-500">No checklist items were ticked by the client.</p>
+                      )}
+                    </div>
 
                     <textarea
                       rows="2"
@@ -604,6 +805,8 @@ function App() {
                       </div>
                     )}
                   </article>
+                    )
+                  })()
                 ))}
               </div>
             )}
